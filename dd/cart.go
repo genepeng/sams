@@ -47,6 +47,11 @@ func parseFloorInfos(g gjson.Result) (error, FloorInfo) {
 		}
 	}
 
+	for _, shortageStockGoods := range g.Get("shortageStockGoodsList").Array() {
+		_, p := parseNormalGoods(shortageStockGoods)
+		r.NormalGoodsList = append(r.NormalGoodsList, p)
+	}
+
 	return nil, r
 }
 func (s *DingdongSession) GetCart(result gjson.Result) error {
@@ -94,6 +99,8 @@ func (s *DingdongSession) CheckCart() error {
 		switch result.Get("code").Str {
 		case "Success":
 			return s.GetCart(result)
+		case "LIMITED":
+			return LimitedErr1
 		default:
 			return errors.New(result.Get("msg").Str)
 		}

@@ -26,6 +26,7 @@ type NormalGoods struct {
 	Price         int    `json:"price"`
 	InvalidReason string `json:"invalidReason"`
 	Quantity      int    `json:"quantity"`
+	StockQuantity int    `json:"stockQuantity"`
 }
 
 func (this NormalGoods) ToGoods() Goods {
@@ -48,6 +49,7 @@ func parseNormalGoods(g gjson.Result) (error, NormalGoods) {
 		Price:         int(g.Get("price").Int()),
 		InvalidReason: g.Get("invalidReason").Str,
 		Quantity:      int(g.Get("quantity").Num),
+		StockQuantity: int(g.Get("stockQuantity").Num),
 	}
 	return nil, r
 }
@@ -58,18 +60,12 @@ func (s *DingdongSession) CheckGoods() error {
 	data := make(map[string]interface{})
 	data["floorId"] = 1
 	data["storeId"] = ""
-	goods := make([]Goods, 0)
 	for _, v := range s.Cart.FloorInfoList {
 		if v.FloorId == s.Conf.FloorId {
-			for _, v := range v.NormalGoodsList {
-				if data["storeId"] == "" {
-					data["storeId"] = v.StoreId
-				}
-				goods = append(goods, Goods{StoreId: v.StoreId, Quantity: v.Quantity, SpuId: v.SpuId})
-			}
+			data["storeId"] = v.StoreInfo.StoreId
 		}
 	}
-	data["goodsList"] = goods
+	data["goodsList"] = s.GoodsList
 	dataStr, _ := json.Marshal(data)
 	req := s.NewRequest("POST", urlPath, dataStr)
 
